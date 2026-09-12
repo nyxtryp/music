@@ -1,0 +1,261 @@
+import { useEffect, useRef } from 'react'
+import * as THREE from 'three'
+
+export default function MusicPlanet() {
+  const mountRef = useRef(null)
+
+  useEffect(() => {
+    const mount = mountRef.current
+
+    const scene = new THREE.Scene()
+
+    const camera = new THREE.PerspectiveCamera(
+      45,
+      mount.clientWidth / mount.clientHeight,
+      0.1,
+      100
+    )
+
+    camera.position.set(0, 0, 6)
+
+    const renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      alpha: true,
+      powerPreference: 'high-performance',
+    })
+
+    renderer.setPixelRatio(
+      Math.min(window.devicePixelRatio, 2)
+    )
+
+    renderer.setSize(
+      mount.clientWidth,
+      mount.clientHeight
+    )
+
+    renderer.outputColorSpace =
+      THREE.SRGBColorSpace
+
+    mount.appendChild(renderer.domElement)
+
+    // =========================
+    // PLANET
+    // =========================
+
+    const planetGeometry =
+      new THREE.SphereGeometry(1.05, 64, 64)
+
+    const planetMaterial =
+      new THREE.MeshStandardMaterial({
+        color: 0x171321,
+        roughness: 0.45,
+        metalness: 0.15,
+        emissive: 0x09030f,
+        emissiveIntensity: 0.7,
+      })
+
+    const planet =
+      new THREE.Mesh(
+        planetGeometry,
+        planetMaterial
+      )
+
+    scene.add(planet)
+
+    // =========================
+    // ATMOSPHERE
+    // =========================
+
+    const atmosphereGeometry =
+      new THREE.SphereGeometry(1.12, 64, 64)
+
+    const atmosphereMaterial =
+      new THREE.MeshBasicMaterial({
+        color: 0x8b5cff,
+        transparent: true,
+        opacity: 0.12,
+        side: THREE.BackSide,
+      })
+
+    const atmosphere =
+      new THREE.Mesh(
+        atmosphereGeometry,
+        atmosphereMaterial
+      )
+
+    scene.add(atmosphere)
+
+    // =========================
+    // LIGHT
+    // =========================
+
+    const ambientLight =
+      new THREE.AmbientLight(
+        0xffffff,
+        0.8
+      )
+
+    scene.add(ambientLight)
+
+    const pointLight =
+      new THREE.PointLight(
+        0xffffff,
+        2.5,
+        10
+      )
+
+    pointLight.position.set(
+      2,
+      2,
+      4
+    )
+
+    scene.add(pointLight)
+
+    // =========================
+    // ORBIT RING
+    // =========================
+
+    const ringGeometry =
+      new THREE.RingGeometry(
+        1.45,
+        1.47,
+        128
+      )
+
+    const ringMaterial =
+      new THREE.MeshBasicMaterial({
+        color: 0xffffff,
+        transparent: true,
+        opacity: 0.35,
+        side: THREE.DoubleSide,
+      })
+
+    const ring =
+      new THREE.Mesh(
+        ringGeometry,
+        ringMaterial
+      )
+
+    ring.rotation.x =
+      Math.PI * 0.38
+
+    ring.rotation.z =
+      Math.PI * 0.12
+
+    scene.add(ring)
+
+    // =========================
+    // ANIMATION
+    // =========================
+
+    const clock =
+      new THREE.Clock()
+
+    let animationId
+
+    const animate = () => {
+      const elapsed =
+        clock.getElapsedTime()
+
+      planet.rotation.y =
+        elapsed * 0.12
+
+      atmosphere.rotation.y =
+        elapsed * 0.08
+
+      ring.rotation.z =
+        Math.PI * 0.12 +
+        elapsed * 0.08
+
+      renderer.render(
+        scene,
+        camera
+      )
+
+      animationId =
+        requestAnimationFrame(
+          animate
+        )
+    }
+
+    animate()
+
+    // =========================
+    // RESIZE
+    // =========================
+
+    const handleResize = () => {
+      const width =
+        mount.clientWidth
+
+      const height =
+        mount.clientHeight
+
+      camera.aspect =
+        width / height
+
+      camera.updateProjectionMatrix()
+
+      renderer.setSize(
+        width,
+        height
+      )
+
+      renderer.setPixelRatio(
+        Math.min(
+          window.devicePixelRatio,
+          2
+        )
+      )
+    }
+
+    window.addEventListener(
+      'resize',
+      handleResize
+    )
+
+    // =========================
+    // CLEANUP
+    // =========================
+
+    return () => {
+      window.removeEventListener(
+        'resize',
+        handleResize
+      )
+
+      cancelAnimationFrame(
+        animationId
+      )
+
+      planetGeometry.dispose()
+      planetMaterial.dispose()
+
+      atmosphereGeometry.dispose()
+      atmosphereMaterial.dispose()
+
+      ringGeometry.dispose()
+      ringMaterial.dispose()
+
+      renderer.dispose()
+
+      if (
+        mount.contains(
+          renderer.domElement
+        )
+      ) {
+        mount.removeChild(
+          renderer.domElement
+        )
+      }
+    }
+  }, [])
+
+  return (
+    <div
+      ref={mountRef}
+      className="music-planet"
+    />
+  )
+}

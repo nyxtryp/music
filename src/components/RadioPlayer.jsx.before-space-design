@@ -1,0 +1,449 @@
+import { useEffect, useRef, useState } from "react"
+
+const RADIO_TRACKS = [
+  { title: "Amazing Nature", file: "/audio/radio/Amazing_Nature.mp3" },
+  { title: "Calm Vibrations", file: "/audio/radio/Calm_Vibrations.mp3" },
+  { title: "Deep Sleep", file: "/audio/radio/Deep_Sleep.mp3" },
+  { title: "Forest Before Rain", file: "/audio/radio/Forest_Before_Rain.mp3" },
+  { title: "Forest Sounds", file: "/audio/radio/Forest_Sounds.mp3" },
+  { title: "Harmony", file: "/audio/radio/Harmony.mp3" },
+  { title: "Inner Peace", file: "/audio/radio/Inner_Peace.mp3" },
+  { title: "Inside Japan", file: "/audio/radio/Inside_Japan.mp3" },
+  { title: "Iren Lullaby", file: "/audio/radio/Iren_Lullaby.mp3" },
+  { title: "Morning Prayer", file: "/audio/radio/Morning_Prayer.mp3" },
+  { title: "Ocean Waves", file: "/audio/radio/Ocean_Waves.mp3" },
+  { title: "Path to Happiness", file: "/audio/radio/Path_to_Happiness.mp3" },
+  { title: "Quiet Place", file: "/audio/radio/Quiet_Place.mp3" },
+  { title: "Sparks", file: "/audio/radio/Sparks.mp3" },
+  { title: "Thunderstorm", file: "/audio/radio/Thunderstorm.mp3" }
+]
+
+export default function RadioPlayer() {
+  const audioRef = useRef(null)
+  const analyserRef = useRef(null)
+  const sourceRef = useRef(null)
+  const audioContextRef = useRef(null)
+  const animationRef = useRef(null)
+  const canvasRef = useRef(null)
+
+  const [trackIndex, setTrackIndex] = useState(0)
+  const [volume, setVolume] = useState(0.72)
+  const [muted, setMuted] = useState(false)
+  const [playing, setPlaying] = useState(false)
+
+  const currentTrack = RADIO_TRACKS[trackIndex]
+
+  useEffect(() => {
+    const audio = audioRef.current
+    if (!audio) return
+
+    audio.volume = volume
+    audio.muted = muted
+  }, [volume, muted])
+
+  useEffect(() => {
+    const audio = audioRef.current
+    if (!audio) return
+
+    const handleEnded = () => {
+      setTrackIndex((current) =>
+        (current + 1) % RADIO_TRACKS.length
+      )
+    }
+
+    audio.addEventListener("ended", handleEnded)
+
+    return () => {
+      audio.removeEventListener("ended", handleEnded)
+    }
+  }, [])
+
+  useEffect(() => {
+    const audio = audioRef.current
+    if (!audio) return
+
+    audio.src = currentTrack.file
+    audio.load()
+
+    if (playing) {
+      audio.play().catch(() => {})
+    }
+  }, [trackIndex])
+
+  useEffect(() => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+
+    const ctx = canvas.getContext("2d")
+    if (!ctx) return
+
+    const resize = () => {
+      const dpr = Math.min(window.devicePixelRatio || 1, 2)
+      const width = canvas.clientWidth
+      const height = canvas.clientHeight
+
+      canvas.width = width * dpr
+      canvas.height = height * dpr
+
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+    }
+
+    resize()
+    window.addEventListener("resize", resize)
+
+    const bars = 42
+    const values = new Array(bars).fill(0)
+
+    const draw = () => {
+      const width = canvas.clientWidth
+      const height = canvas.clientHeight
+
+      ctx.clearRect(0, 0, width, height)
+
+      let frequencyData = null
+
+      if (analyserRef.current && playing) {
+        frequencyData = new Uint8Array(
+          analyserRef.current.frequencyBinCount
+        )
+
+        analyserRef.current.getByteFrequencyData(
+          frequencyData
+        )
+      }
+
+      const gap = 3
+      const barWidth =
+        (width - gap * (bars - 1)) / bars
+
+      for (let i = 0; i < bars; i++) {
+        let target = 0.08
+
+        if (frequencyData) {
+          const index = Math.floor(
+            (i / bars) *
+              frequencyData.length *
+              0.72
+          )
+
+          target =
+            frequencyData[index] / 255
+        }
+
+        target = Math.max(
+          0.035,
+          Math.pow(target, 1.15)
+        )
+
+        values[i] +=
+          (target - values[i]) * 0.16
+
+        const barHeight =
+          Math.max(
+            3,
+            values[i] * height * 0.9
+          )
+
+        const x =
+          i * (barWidth + gap)
+
+        const y =
+          height - barHeight
+
+        const ratio =
+          barHeight / height
+
+        const r =
+          Math.floor(
+            90 + ratio * 165
+          )
+
+        const g =
+          Math.floor(
+            205 - ratio * 145
+          )
+
+        const b =
+          Math.floor(
+            255 - ratio * 205
+          )
+
+        ctx.fillStyle =
+          `rgb(${r}, ${g}, ${b})`
+
+        ctx.shadowBlur = 10
+        ctx.shadowColor =
+          `rgb(${r}, ${g}, ${b})`
+
+        ctx.fillRect(
+          x,
+          y,
+          barWidth,
+          barHeight
+        )
+      }
+
+      ctx.shadowBlur = 0
+
+      animationRef.current =
+        requestAnimationFrame(draw)
+    }
+
+    draw()
+
+    return () => {
+      window.removeEventListener("resize", resize)
+
+      if (animationRef.current) {
+        cancelAnimationFrame(
+          animationRef.current
+        )
+      }
+    }
+  }, [playing])
+
+  const setupAudio = async () => {
+    const audio = audioRef.current
+    if (!audio) return
+
+    if (!audioContextRef.current) {
+      const AudioContext =
+        window.AudioContext ||
+        window.webkitAudioContext
+
+      if (!AudioContext) {
+        await audio.play()
+        return
+      }
+
+      const context = new AudioContext()
+
+      const analyser =
+        context.createAnalyser()
+
+      analyser.fftSize = 128
+      analyser.smoothingTimeConstant = 0.84
+
+      const source =
+        context.createMediaElementSource(
+          audio
+        )
+
+      source.connect(analyser)
+      analyser.connect(
+        context.destination
+      )
+
+      audioContextRef.current = context
+      analyserRef.current = analyser
+      sourceRef.current = source
+    }
+
+    if (
+      audioContextRef.current.state ===
+      "suspended"
+    ) {
+      await audioContextRef.current.resume()
+    }
+  }
+
+  const startRadio = async () => {
+    const audio = audioRef.current
+    if (!audio) return
+
+    await setupAudio()
+
+    try {
+      await audio.play()
+      setPlaying(true)
+    } catch {
+      setPlaying(false)
+    }
+  }
+
+  const toggleMute = () => {
+    setMuted((value) => !value)
+  }
+
+  const handleVolume = (event) => {
+    const value =
+      Number(event.target.value)
+
+    setVolume(value)
+
+    if (value > 0) {
+      setMuted(false)
+    }
+  }
+
+  return (
+    <div
+      style={{
+        width: "100%",
+        maxWidth: 760,
+        padding: "28px 28px 24px",
+        boxSizing: "border-box",
+        borderRadius: 24,
+        background:
+          "rgba(4, 7, 16, 0.72)",
+        border:
+          "1px solid rgba(255,255,255,0.10)",
+        backdropFilter:
+          "blur(22px)",
+        WebkitBackdropFilter:
+          "blur(22px)",
+        color: "#fff",
+        fontFamily:
+          "Arial, Helvetica, sans-serif",
+        boxShadow:
+          "0 20px 80px rgba(0,0,0,0.45)"
+      }}
+    >
+      <audio
+        ref={audioRef}
+        preload="auto"
+        onPlay={() => setPlaying(true)}
+        onPause={() => setPlaying(false)}
+      />
+
+      <div
+        style={{
+          textAlign: "center",
+          letterSpacing: "0.34em",
+          fontSize: 11,
+          opacity: 0.58,
+          marginBottom: 7
+        }}
+      >
+        NYXTRYP
+      </div>
+
+      <div
+        style={{
+          textAlign: "center",
+          letterSpacing: "0.18em",
+          fontSize: 18,
+          fontWeight: 500,
+          marginBottom: 24
+        }}
+      >
+        RELAX RADIO
+      </div>
+
+      <canvas
+        ref={canvasRef}
+        style={{
+          display: "block",
+          width: "100%",
+          height: 150,
+          marginBottom: 22
+        }}
+      />
+
+      <div
+        style={{
+          textAlign: "center",
+          fontSize: 9,
+          letterSpacing: "0.22em",
+          opacity: 0.42,
+          marginBottom: 8
+        }}
+      >
+        NOW PLAYING
+      </div>
+
+      <div
+        style={{
+          textAlign: "center",
+          fontSize: 17,
+          letterSpacing: "0.05em",
+          marginBottom: 24,
+          minHeight: 22
+        }}
+      >
+        {currentTrack.title}
+      </div>
+
+      {!playing && (
+        <button
+          onClick={startRadio}
+          style={{
+            display: "block",
+            margin: "0 auto 22px",
+            padding: "11px 28px",
+            borderRadius: 30,
+            border:
+              "1px solid rgba(255,255,255,0.22)",
+            background:
+              "rgba(255,255,255,0.08)",
+            color: "#fff",
+            cursor: "pointer",
+            letterSpacing: "0.16em",
+            fontSize: 10
+          }}
+        >
+          ENTER RADIO
+        </button>
+      )}
+
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 13,
+          maxWidth: 360,
+          margin: "0 auto"
+        }}
+      >
+        <button
+          onClick={toggleMute}
+          style={{
+            width: 36,
+            height: 36,
+            borderRadius: "50%",
+            border:
+              "1px solid rgba(255,255,255,0.15)",
+            background:
+              "rgba(255,255,255,0.06)",
+            color: "#fff",
+            cursor: "pointer",
+            fontSize: 14
+          }}
+          aria-label={
+            muted
+              ? "Unmute"
+              : "Mute"
+          }
+        >
+          {muted ? "×" : "◖"}
+        </button>
+
+        <input
+          type="range"
+          min="0"
+          max="1"
+          step="0.01"
+          value={muted ? 0 : volume}
+          onChange={handleVolume}
+          style={{
+            flex: 1,
+            accentColor: "#ff7b45"
+          }}
+          aria-label="Volume"
+        />
+      </div>
+
+      <div
+        style={{
+          textAlign: "center",
+          marginTop: 18,
+          fontSize: 9,
+          letterSpacing: "0.18em",
+          opacity: 0.28
+        }}
+      >
+        ONE STATION · CONTINUOUS RELAXATION
+      </div>
+    </div>
+  )
+}

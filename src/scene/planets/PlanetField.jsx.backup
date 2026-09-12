@@ -1,0 +1,1230 @@
+import { useEffect, useRef } from "react"
+import * as THREE from "three"
+
+const PLANETS = [
+  {
+    name: "VIDEOS",
+    texture: "/textures/planets/mercury.jpg",
+    radius: 0.38,
+    position: [-3.8, -1.2, -4.5],
+    speed: 0.0012
+  },
+  {
+    name: "PHOTOS",
+    texture: "/textures/planets/venus.jpg",
+    radius: 0.55,
+    position: [5.2, 0.8, -6.8],
+    speed: 0.0008
+  },
+  {
+    name: "VISUALS",
+    texture: "/textures/planets/mars.jpg",
+    radius: 0.46,
+    position: [-5.5, -2.8, -8.5],
+    speed: 0.001
+  },
+  {
+    name: "RELEASES",
+    texture: "/textures/planets/jupiter.jpg",
+    radius: 0.95,
+    position: [6.2, -2.5, -12.0],
+    speed: 0.00045
+  },
+  {
+    name: "WORLDS",
+    texture: "/textures/planets/saturn.jpg",
+    radius: 0.82,
+    position: [-9.0, 5.8, -17.0],
+    speed: 0.00055,
+    rings: true
+  },
+  {
+    name: "ABOUT",
+    texture: "/textures/planets/uranus.jpg",
+    radius: 0.62,
+    position: [7.8, 3.8, -17.0],
+    speed: 0.00065
+  },
+  {
+    name: "SOCIAL",
+    texture: "/textures/planets/neptune.jpg",
+    radius: 0.68,
+    position: [2.0, -5.0, -19.0],
+    speed: 0.0006
+  }
+]
+
+export default function PlanetField() {
+  const ref = useRef(null)
+
+  useEffect(() => {
+    const el = ref.current
+
+    const scene = new THREE.Scene()
+
+    const camera = new THREE.PerspectiveCamera(
+      35,
+      el.clientWidth / el.clientHeight,
+      0.1,
+      250
+    )
+
+    camera.position.set(0, 0, 17)
+
+    const renderer = new THREE.WebGLRenderer({
+      alpha: true,
+      antialias: true
+    })
+
+    renderer.setPixelRatio(
+      Math.min(window.devicePixelRatio, 2)
+    )
+
+    renderer.setSize(
+      el.clientWidth,
+      el.clientHeight
+    )
+
+    renderer.outputColorSpace =
+      THREE.SRGBColorSpace
+
+    renderer.setClearColor(
+      0x000000,
+      0
+    )
+
+    renderer.shadowMap.enabled = true
+    renderer.shadowMap.type =
+      THREE.PCFSoftShadowMap
+
+    el.appendChild(
+      renderer.domElement
+    )
+
+    const canvas =
+      renderer.domElement
+
+    canvas.style.cursor = "default"
+    canvas.style.touchAction = "none"
+
+    // ============================================================
+    // LIGHTING
+    // ============================================================
+
+    const ambient =
+      new THREE.AmbientLight(
+        0x91a9cc,
+        0.95
+      )
+
+    scene.add(ambient)
+
+    const sunPosition =
+      new THREE.Vector3(
+        -35,
+        18,
+        -55
+      )
+
+    const sunLight =
+      new THREE.DirectionalLight(
+        0xffffff,
+        6.5
+      )
+
+    sunLight.position.copy(
+      sunPosition
+    )
+
+    sunLight.target.position.set(
+      0,
+      0,
+      -10
+    )
+
+    sunLight.castShadow = true
+
+    sunLight.shadow.mapSize.width =
+      2048
+
+    sunLight.shadow.mapSize.height =
+      2048
+
+    sunLight.shadow.camera.near = 1
+    sunLight.shadow.camera.far = 120
+
+    scene.add(sunLight)
+    scene.add(sunLight.target)
+
+    // Soft universal fill.
+    const spaceFill =
+      new THREE.HemisphereLight(
+        0x9bbcff,
+        0x111827,
+        0.85
+      )
+
+    scene.add(spaceFill)
+
+    // Hidden Sun: light source only.
+    const sun =
+      new THREE.Mesh(
+        new THREE.SphereGeometry(
+          0.75,
+          48,
+          48
+        ),
+        new THREE.MeshBasicMaterial({
+          color: 0xfff4cf,
+          transparent: true,
+          opacity: 0,
+          depthWrite: false
+        })
+      )
+
+    sun.position.copy(
+      sunPosition
+    )
+
+    scene.add(sun)
+
+    const glow =
+      new THREE.Mesh(
+        new THREE.SphereGeometry(
+          1.25,
+          48,
+          48
+        ),
+        new THREE.MeshBasicMaterial({
+          color: 0xffd98a,
+          transparent: true,
+          opacity: 0,
+          depthWrite: false,
+          blending:
+            THREE.AdditiveBlending
+        })
+      )
+
+    glow.position.copy(
+      sunPosition
+    )
+
+    scene.add(glow)
+
+    // ============================================================
+    // STAR FIELD
+    // ============================================================
+
+    const starLayers = []
+
+    const createStars = (
+      count,
+      spread,
+      size,
+      opacity,
+      depth
+    ) => {
+      const positions =
+        new Float32Array(
+          count * 3
+        )
+
+      for (
+        let i = 0;
+        i < count;
+        i++
+      ) {
+        positions[i * 3] =
+          (Math.random() - 0.5) *
+          spread
+
+        positions[i * 3 + 1] =
+          (Math.random() - 0.5) *
+          spread
+
+        positions[i * 3 + 2] =
+          -Math.random() *
+          depth
+      }
+
+      const geometry =
+        new THREE.BufferGeometry()
+
+      geometry.setAttribute(
+        "position",
+        new THREE.BufferAttribute(
+          positions,
+          3
+        )
+      )
+
+      const material =
+        new THREE.PointsMaterial({
+          color: 0xffffff,
+          size,
+          transparent: true,
+          opacity,
+          depthWrite: false,
+          sizeAttenuation: true
+        })
+
+      const stars =
+        new THREE.Points(
+          geometry,
+          material
+        )
+
+      scene.add(stars)
+
+      starLayers.push({
+        object: stars,
+        speed:
+          0.00015 +
+          Math.random() *
+            0.0002
+      })
+    }
+
+    createStars(
+      900,
+      100,
+      0.035,
+      0.45,
+      120
+    )
+
+    createStars(
+      420,
+      70,
+      0.055,
+      0.65,
+      75
+    )
+
+    createStars(
+      160,
+      45,
+      0.085,
+      0.85,
+      45
+    )
+
+    // ============================================================
+    // SHOOTING STARS
+    // ============================================================
+
+    const shootingStars = []
+
+    for (
+      let i = 0;
+      i < 3;
+      i++
+    ) {
+      const geometry =
+        new THREE.BufferGeometry()
+
+      geometry.setAttribute(
+        "position",
+        new THREE.BufferAttribute(
+          new Float32Array([
+            0, 0, 0,
+            -0.9, 0.25, 0
+          ]),
+          3
+        )
+      )
+
+      const material =
+        new THREE.LineBasicMaterial({
+          color: 0xffffff,
+          transparent: true,
+          opacity: 0
+        })
+
+      const line =
+        new THREE.Line(
+          geometry,
+          material
+        )
+
+      line.position.set(
+        0,
+        0,
+        -20
+      )
+
+      scene.add(line)
+
+      shootingStars.push({
+        object: line,
+        active: false,
+        timer:
+          Math.random() *
+            12 +
+          5,
+        life: 0
+      })
+    }
+
+    // ============================================================
+    // PLANETS
+    // ============================================================
+
+    const loader =
+      new THREE.TextureLoader()
+
+    const objects = []
+
+    PLANETS.forEach(
+      (data, index) => {
+        const texture =
+          loader.load(
+            data.texture
+          )
+
+        texture.colorSpace =
+          THREE.SRGBColorSpace
+
+        texture.anisotropy =
+          renderer.capabilities.getMaxAnisotropy()
+
+        const material =
+          new THREE.MeshStandardMaterial({
+            map: texture,
+            roughness: 0.72,
+            metalness: 0,
+            envMapIntensity: 1.15
+          })
+
+        const planet =
+          new THREE.Mesh(
+            new THREE.SphereGeometry(
+              data.radius,
+              64,
+              64
+            ),
+            material
+          )
+
+        planet.position.set(
+          ...data.position
+        )
+
+        planet.castShadow = true
+        planet.receiveShadow = true
+
+        planet.userData.name =
+          data.name
+
+        planet.userData.index =
+          index
+
+        scene.add(planet)
+
+        // Individual soft fill.
+        const fillLight =
+          new THREE.PointLight(
+            0x9fc4ff,
+            2.2,
+            data.radius * 13,
+            2
+          )
+
+        fillLight.position.set(
+          -data.radius * 2.5,
+          data.radius * 1.5,
+          data.radius * 3
+        )
+
+        planet.add(
+          fillLight
+        )
+
+        const object = {
+          mesh: planet,
+          speed: data.speed,
+          base:
+            planet.position.clone(),
+          driftX:
+            0.10 +
+            Math.random() *
+              0.16,
+          driftY:
+            0.08 +
+            Math.random() *
+              0.14,
+          driftZ:
+            0.06 +
+            Math.random() *
+              0.12,
+          ampX:
+            0.35 +
+            Math.random() *
+              0.35,
+          ampY:
+            0.25 +
+            Math.random() *
+              0.30,
+          ampZ:
+            0.20 +
+            Math.random() *
+              0.30,
+          phaseX:
+            Math.random() *
+            Math.PI *
+            2,
+          phaseY:
+            Math.random() *
+            Math.PI *
+            2,
+          phaseZ:
+            Math.random() *
+            Math.PI *
+            2
+        }
+
+        objects.push(
+          object
+        )
+
+        // ========================================================
+        // SATURN RINGS
+        // ========================================================
+
+        if (data.rings) {
+          const ringTexture =
+            loader.load(
+              "/textures/planets/saturn-ring.png"
+            )
+
+          ringTexture.colorSpace =
+            THREE.SRGBColorSpace
+
+          const ring =
+            new THREE.Mesh(
+              new THREE.RingGeometry(
+                data.radius * 1.25,
+                data.radius * 2.05,
+                96
+              ),
+              new THREE.MeshStandardMaterial({
+                map: ringTexture,
+                transparent: true,
+                side: THREE.DoubleSide,
+                depthWrite: false,
+                roughness: 0.85
+              })
+            )
+
+          ring.rotation.x =
+            Math.PI / 2.25
+
+          ring.rotation.z =
+            0.15
+
+          planet.add(
+            ring
+          )
+        }
+      }
+    )
+
+    // ============================================================
+    // PLANET LABEL
+    // ============================================================
+
+    const label =
+      document.createElement(
+        "div"
+      )
+
+    label.style.position =
+      "absolute"
+
+    label.style.left = "0"
+    label.style.top = "0"
+
+    label.style.transform =
+      "translate(-50%, -50%)"
+
+    label.style.padding =
+      "7px 13px"
+
+    label.style.border =
+      "1px solid rgba(255,255,255,0.45)"
+
+    label.style.borderRadius =
+      "999px"
+
+    label.style.background =
+      "rgba(0,0,0,0.55)"
+
+    label.style.backdropFilter =
+      "blur(8px)"
+
+    label.style.color =
+      "#ffffff"
+
+    label.style.fontSize =
+      "11px"
+
+    label.style.letterSpacing =
+      "0.28em"
+
+    label.style.fontFamily =
+      "Arial, Helvetica, sans-serif"
+
+    label.style.pointerEvents =
+      "none"
+
+    label.style.whiteSpace =
+      "nowrap"
+
+    label.style.opacity =
+      "0"
+
+    label.style.transition =
+      "opacity 0.18s ease"
+
+    label.style.zIndex =
+      "20"
+
+    label.textContent = ""
+
+    el.style.position =
+      "relative"
+
+    el.appendChild(
+      label
+    )
+
+    // ============================================================
+    // INTERACTION
+    // ============================================================
+
+    const raycaster =
+      new THREE.Raycaster()
+
+    const pointer =
+      new THREE.Vector2()
+
+    let hoveredPlanet = null
+    let selectedPlanet = null
+
+    let isDragging = false
+
+    let lastX = 0
+    let lastY = 0
+
+    let cameraDistance = 17
+
+    let cameraTarget =
+      new THREE.Vector3(
+        0,
+        0,
+        17
+      )
+
+    let lookTarget =
+      new THREE.Vector3(
+        0,
+        0,
+        0
+      )
+
+    const getPointer =
+      (event) => {
+        const rect =
+          canvas.getBoundingClientRect()
+
+        pointer.x =
+          ((event.clientX -
+            rect.left) /
+            rect.width) *
+            2 -
+          1
+
+        pointer.y =
+          -(
+            ((event.clientY -
+              rect.top) /
+              rect.height) *
+              2 -
+            1
+          )
+      }
+
+    const intersectPlanet =
+      (event) => {
+        getPointer(event)
+
+        raycaster.setFromCamera(
+          pointer,
+          camera
+        )
+
+        const hits =
+          raycaster.intersectObjects(
+            objects.map(
+              ({ mesh }) =>
+                mesh
+            ),
+            false
+          )
+
+        return hits.length
+          ? hits[0].object
+          : null
+      }
+
+    const onPointerMove =
+      (event) => {
+        const hit =
+          intersectPlanet(
+            event
+          )
+
+        if (
+          hit &&
+          !isDragging
+        ) {
+          hoveredPlanet =
+            hit
+
+          label.textContent =
+            hit.userData.name
+
+          label.style.opacity =
+            "1"
+
+          canvas.style.cursor =
+            "pointer"
+        } else if (
+          !isDragging
+        ) {
+          hoveredPlanet =
+            null
+
+          label.style.opacity =
+            "0"
+
+          canvas.style.cursor =
+            "default"
+        }
+
+        if (!isDragging)
+          return
+
+        const dx =
+          event.clientX -
+          lastX
+
+        const dy =
+          event.clientY -
+          lastY
+
+        lastX =
+          event.clientX
+
+        lastY =
+          event.clientY
+
+        if (
+          selectedPlanet
+        ) {
+          selectedPlanet.rotation.y +=
+            dx * 0.01
+
+          selectedPlanet.rotation.x +=
+            dy * 0.005
+
+          selectedPlanet.rotation.x =
+            THREE.MathUtils.clamp(
+              selectedPlanet.rotation.x,
+              -Math.PI * 0.45,
+              Math.PI * 0.45
+            )
+        }
+      }
+
+    const onPointerDown =
+      (event) => {
+        if (
+          event.button !== 0
+        )
+          return
+
+        const hit =
+          intersectPlanet(
+            event
+          )
+
+        if (!hit) {
+          isDragging = false
+          return
+        }
+
+        selectedPlanet =
+          hit
+
+        isDragging = true
+
+        lastX =
+          event.clientX
+
+        lastY =
+          event.clientY
+
+        canvas.style.cursor =
+          "grabbing"
+      }
+
+    const onPointerUp =
+      () => {
+        isDragging = false
+
+        if (
+          hoveredPlanet
+        ) {
+          canvas.style.cursor =
+            "pointer"
+        } else {
+          canvas.style.cursor =
+            "default"
+        }
+      }
+
+    const onWheel =
+      (event) => {
+        event.preventDefault()
+
+        if (
+          !selectedPlanet
+        )
+          return
+
+        cameraDistance +=
+          event.deltaY * 0.012
+
+        cameraDistance =
+          THREE.MathUtils.clamp(
+            cameraDistance,
+            Math.max(
+              1.8,
+              selectedPlanet
+                .geometry
+                .parameters
+                .radius * 2.2
+            ),
+            17
+          )
+      }
+
+    canvas.addEventListener(
+      "pointermove",
+      onPointerMove
+    )
+
+    canvas.addEventListener(
+      "pointerdown",
+      onPointerDown
+    )
+
+    canvas.addEventListener(
+      "pointerup",
+      onPointerUp
+    )
+
+    canvas.addEventListener(
+      "pointercancel",
+      onPointerUp
+    )
+
+    canvas.addEventListener(
+      "wheel",
+      onWheel,
+      {
+        passive: false
+      }
+    )
+
+    // ============================================================
+    // ANIMATION
+    // ============================================================
+
+    let animationId
+
+    const animate =
+      () => {
+        const t =
+          performance.now() *
+          0.001
+
+        objects.forEach(
+          ({
+            mesh,
+            speed,
+            base,
+            driftX,
+            driftY,
+            driftZ,
+            ampX,
+            ampY,
+            ampZ,
+            phaseX,
+            phaseY,
+            phaseZ
+          }) => {
+            if (
+              mesh !==
+              selectedPlanet
+            ) {
+              mesh.rotation.y +=
+                speed
+            }
+
+            mesh.position.x =
+              base.x +
+              Math.sin(
+                t *
+                  driftX +
+                  phaseX
+              ) *
+                ampX
+
+            mesh.position.y =
+              base.y +
+              Math.sin(
+                t *
+                  driftY +
+                  phaseY
+              ) *
+                ampY
+
+            mesh.position.z =
+              base.z +
+              Math.sin(
+                t *
+                  driftZ +
+                  phaseZ
+              ) *
+                ampZ
+          }
+        )
+
+        // Camera follows selected planet.
+        if (
+          selectedPlanet
+        ) {
+          const p =
+            selectedPlanet.position
+
+          cameraTarget.lerp(
+            new THREE.Vector3(
+              p.x,
+              p.y,
+              p.z +
+                cameraDistance
+            ),
+            0.055
+          )
+
+          lookTarget.lerp(
+            p,
+            0.08
+          )
+        } else {
+          cameraTarget.lerp(
+            new THREE.Vector3(
+              0,
+              0,
+              17
+            ),
+            0.05
+          )
+
+          lookTarget.lerp(
+            new THREE.Vector3(
+              0,
+              0,
+              0
+            ),
+            0.05
+          )
+        }
+
+        camera.position.copy(
+          cameraTarget
+        )
+
+        camera.lookAt(
+          lookTarget
+        )
+
+        // Hover label follows planet.
+        if (
+          hoveredPlanet &&
+          !isDragging
+        ) {
+          const world =
+            hoveredPlanet.position
+              .clone()
+
+          world.y +=
+            hoveredPlanet.geometry
+              .parameters
+              .radius *
+              1.35
+
+          const projected =
+            world.project(
+              camera
+            )
+
+          const rect =
+            canvas.getBoundingClientRect()
+
+          label.style.left =
+            `${
+              (projected.x + 1) *
+              0.5 *
+              rect.width
+            }px`
+
+          label.style.top =
+            `${
+              (-projected.y + 1) *
+              0.5 *
+              rect.height
+            }px`
+        }
+
+        // Star parallax.
+        starLayers.forEach(
+          ({
+            object,
+            speed
+          }, index) => {
+            object.rotation.y +=
+              speed *
+              (index + 1)
+
+            object.rotation.x +=
+              speed *
+              0.35
+          }
+        )
+
+        const sunScale =
+          1 +
+          Math.sin(
+            t * 0.45
+          ) *
+            0.025
+
+        sun.scale.setScalar(
+          sunScale
+        )
+
+        glow.scale.setScalar(
+          1 +
+            Math.sin(
+              t * 0.45
+            ) *
+              0.05
+        )
+
+        // Shooting stars.
+        shootingStars.forEach(
+          (star) => {
+            if (
+              !star.active
+            ) {
+              star.timer -=
+                0.016
+
+              if (
+                star.timer <=
+                0
+              ) {
+                star.active =
+                  true
+
+                star.life = 0
+
+                star.object.position.set(
+                  (Math.random() -
+                    0.5) *
+                    24,
+                  6 +
+                    Math.random() *
+                      8,
+                  -10 -
+                    Math.random() *
+                      30
+                )
+
+                star.object.material.opacity =
+                  1
+              }
+            } else {
+              star.life +=
+                0.016
+
+              star.object.position.x -=
+                0.22
+
+              star.object.position.y -=
+                0.08
+
+              star.object.material.opacity =
+                Math.max(
+                  0,
+                  1 -
+                    star.life /
+                      0.8
+                )
+
+              if (
+                star.life >
+                0.8
+              ) {
+                star.active =
+                  false
+
+                star.timer =
+                  8 +
+                  Math.random() *
+                    18
+              }
+            }
+          }
+        )
+
+        renderer.render(
+          scene,
+          camera
+        )
+
+        animationId =
+          requestAnimationFrame(
+            animate
+          )
+      }
+
+    // ============================================================
+    // RESIZE
+    // ============================================================
+
+    const resize =
+      () => {
+        const w =
+          el.clientWidth
+
+        const h =
+          el.clientHeight
+
+        camera.aspect =
+          w / h
+
+        camera.updateProjectionMatrix()
+
+        renderer.setSize(
+          w,
+          h
+        )
+      }
+
+    resize()
+
+    window.addEventListener(
+      "resize",
+      resize
+    )
+
+    animate()
+
+    // ============================================================
+    // CLEANUP
+    // ============================================================
+
+    return () => {
+      cancelAnimationFrame(
+        animationId
+      )
+
+      window.removeEventListener(
+        "resize",
+        resize
+      )
+
+      canvas.removeEventListener(
+        "pointermove",
+        onPointerMove
+      )
+
+      canvas.removeEventListener(
+        "pointerdown",
+        onPointerDown
+      )
+
+      canvas.removeEventListener(
+        "pointerup",
+        onPointerUp
+      )
+
+      canvas.removeEventListener(
+        "pointercancel",
+        onPointerUp
+      )
+
+      canvas.removeEventListener(
+        "wheel",
+        onWheel
+      )
+
+      objects.forEach(
+        ({ mesh }) => {
+          mesh.geometry.dispose()
+          mesh.material.map?.dispose()
+          mesh.material.dispose()
+        }
+      )
+
+      starLayers.forEach(
+        ({ object }) => {
+          object.geometry.dispose()
+          object.material.dispose()
+        }
+      )
+
+      shootingStars.forEach(
+        ({ object }) => {
+          object.geometry.dispose()
+          object.material.dispose()
+        }
+      )
+
+      label.remove()
+
+      renderer.dispose()
+
+      if (
+        el.contains(
+          renderer.domElement
+        )
+      ) {
+        el.removeChild(
+          renderer.domElement
+        )
+      }
+    }
+  }, [])
+
+  return (
+    <div
+      ref={ref}
+      className="planet-field"
+    />
+  )
+}

@@ -1,0 +1,12 @@
+[Unit]
+Description=NYXTRYP GitHub webhook listener
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/webhook -hooks /etc/webhook/hooks.json -ip 127.0.0.1 -port 9001
+Restart=on-failure
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

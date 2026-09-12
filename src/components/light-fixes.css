@@ -1,0 +1,6 @@
+/* NYXTRYP LIGHT — clean document scrolling for nx layout */
+html:has(.nx-light),body:has(.nx-light){overflow:auto!important;overflow-x:hidden!important;touch-action:auto!important;-webkit-overflow-scrolling:touch}
+.nx-light{min-height:100dvh;width:100%;overflow:visible!important;touch-action:auto!important}
+.nx-light *{touch-action:auto}
+.nx-intro{height:100dvh!important;min-height:100dvh!important}
+@media(prefers-reduced-motion:reduce){html:has(.nx-light){scroll-behavior:auto}}

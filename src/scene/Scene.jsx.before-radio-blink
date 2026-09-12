@@ -1,0 +1,89 @@
+import { useState } from "react"
+import Ocean from "./Ocean.jsx"
+import PlanetField from "./planets/PlanetField.jsx"
+import RadioPlayer from "../components/RadioPlayer.jsx"
+
+export default function Scene() {
+  const [entered, setEntered] = useState(false)
+  const [radioOpen, setRadioOpen] = useState(false)
+
+  const openRadio = () => {
+    setRadioOpen(true)
+  }
+
+  const closeRadio = () => {
+    setRadioOpen(false)
+  }
+
+  return (
+    <div className="scene">
+      {!entered ? (
+        <section className="intro">
+          <p className="artist">NYXTRYP</p>
+
+          <h1>DON'T LISTEN. ENTER.</h1>
+
+          <button
+            className="enter-button"
+            onClick={() => setEntered(true)}
+          >
+            ENTER
+          </button>
+        </section>
+      ) : (
+        <>
+          <Ocean />
+
+          <PlanetField
+            onRadioOpen={openRadio}
+          />
+
+          {radioOpen && (
+            <div
+              style={{
+                position: "fixed",
+                inset: 0,
+                zIndex: 100,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                background: "rgba(0,0,0,.10)",
+                backdropFilter: "blur(2px)",
+                cursor: "default"
+              }}
+              onPointerDown={(event) => {
+                if (
+                  event.target ===
+                  event.currentTarget
+                ) {
+                  closeRadio()
+                }
+              }}
+              onClick={(event) => {
+                if (
+                  event.target ===
+                  event.currentTarget
+                ) {
+                  closeRadio()
+                }
+              }}
+            >
+              <div
+                onPointerDown={(event) => {
+                  event.stopPropagation()
+                }}
+                onClick={(event) => {
+                  event.stopPropagation()
+                }}
+              >
+                <RadioPlayer
+                  onClose={closeRadio}
+                />
+              </div>
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  )
+}

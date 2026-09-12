@@ -1,0 +1,474 @@
+import { useEffect, useRef, useState } from "react"
+
+const RADIO_TRACKS = [
+  { title: "Amazing Nature", file: "/audio/radio/Amazing_Nature.mp3" },
+  { title: "Calm Vibrations", file: "/audio/radio/Calm_Vibrations.mp3" },
+  { title: "Deep Sleep", file: "/audio/radio/Deep_Sleep.mp3" },
+  { title: "Forest Before Rain", file: "/audio/radio/Forest_Before_Rain.mp3" },
+  { title: "Forest Sounds", file: "/audio/radio/Forest_Sounds.mp3" },
+  { title: "Harmony", file: "/audio/radio/Harmony.mp3" },
+  { title: "Inner Peace", file: "/audio/radio/Inner_Peace.mp3" },
+  { title: "Inside Japan", file: "/audio/radio/Inside_Japan.mp3" },
+  { title: "Iren Lullaby", file: "/audio/radio/Iren_Lullaby.mp3" },
+  { title: "Morning Prayer", file: "/audio/radio/Morning_Prayer.mp3" },
+  { title: "Ocean Waves", file: "/audio/radio/Ocean_Waves.mp3" },
+  { title: "Path to Happiness", file: "/audio/radio/Path_to_Happiness.mp3" },
+  { title: "Quiet Place", file: "/audio/radio/Quiet_Place.mp3" },
+  { title: "Sparks", file: "/audio/radio/Sparks.mp3" },
+  { title: "Thunderstorm", file: "/audio/radio/Thunderstorm.mp3" }
+]
+
+export default function RadioPlayer() {
+  const audioRef = useRef(null)
+  const canvasRef = useRef(null)
+  const animationRef = useRef(null)
+
+  const [playing, setPlaying] = useState(false)
+  const [muted, setMuted] = useState(false)
+  const [volume, setVolume] = useState(0.68)
+  const [trackIndex, setTrackIndex] = useState(0)
+  const [signal, setSignal] = useState(92)
+  const [latency, setLatency] = useState("1.4s")
+
+  const track = RADIO_TRACKS[trackIndex]
+
+  useEffect(() => {
+    const audio = audioRef.current
+    if (!audio) return
+
+    audio.volume = volume
+    audio.muted = muted
+  }, [volume, muted])
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const nextSignal = 88 + Math.floor(Math.random() * 10)
+      setSignal(nextSignal)
+
+      const delay = (1.1 + Math.random() * 1.0).toFixed(1)
+      setLatency(`${delay}s`)
+    }, 1800)
+
+    return () => clearInterval(interval)
+  }, [])
+
+  useEffect(() => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+
+    const ctx = canvas.getContext("2d")
+    let t = 0
+
+    const draw = () => {
+      const width = canvas.width
+      const height = canvas.height
+
+      ctx.clearRect(0, 0, width, height)
+
+      const bars = 54
+      const gap = 3
+      const barWidth = Math.max(2, (width - gap * bars) / bars)
+
+      for (let i = 0; i < bars; i++) {
+        const wave =
+          Math.sin(i * 0.45 + t) * 0.5 +
+          Math.sin(i * 0.17 - t * 0.7) * 0.3
+
+        const energy = playing
+          ? Math.abs(wave) * 0.55 + 0.18
+          : 0.08
+
+        const barHeight = height * energy
+
+        const x = i * (barWidth + gap)
+        const y = height - barHeight
+
+        const ratio = i / bars
+
+        let r
+        let g
+        let b
+
+        if (ratio < 0.65) {
+          r = 65
+          g = 190
+          b = 255
+        } else {
+          r = 255
+          g = 110
+          b = 80
+        }
+
+        const gradient = ctx.createLinearGradient(
+          0,
+          y,
+          0,
+          height
+        )
+
+        gradient.addColorStop(
+          0,
+          `rgba(${r},${g},${b},0.95)`
+        )
+
+        gradient.addColorStop(
+          1,
+          `rgba(${r},${g},${b},0.12)`
+        )
+
+        ctx.fillStyle = gradient
+
+        ctx.fillRect(
+          x,
+          y,
+          barWidth,
+          barHeight
+        )
+      }
+
+      t += playing ? 0.045 : 0.012
+
+      animationRef.current =
+        requestAnimationFrame(draw)
+    }
+
+    draw()
+
+    return () => {
+      cancelAnimationFrame(animationRef.current)
+    }
+  }, [playing])
+
+  const togglePlay = async () => {
+    const audio = audioRef.current
+    if (!audio) return
+
+    if (playing) {
+      audio.pause()
+      setPlaying(false)
+      return
+    }
+
+    try {
+      await audio.play()
+      setPlaying(true)
+    } catch {
+      setPlaying(false)
+    }
+  }
+
+  const handleEnded = () => {
+    setTrackIndex(
+      (current) =>
+        (current + 1) % RADIO_TRACKS.length
+    )
+  }
+
+  useEffect(() => {
+    const audio = audioRef.current
+    if (!audio) return
+
+    audio.src = track.file
+    audio.load()
+
+    if (playing) {
+      audio.play().catch(() => {
+        setPlaying(false)
+      })
+    }
+  }, [trackIndex])
+
+  return (
+    <div
+      style={{
+        width: "min(420px, 90vw)",
+        padding: "26px 26px 22px",
+        borderRadius: "24px",
+        background:
+          "linear-gradient(145deg, rgba(9,15,27,.94), rgba(3,7,15,.97))",
+        border:
+          "1px solid rgba(125,190,255,.20)",
+        boxShadow:
+          "0 20px 70px rgba(0,0,0,.55), inset 0 0 40px rgba(70,150,255,.035)",
+        color: "#eaf4ff",
+        fontFamily:
+          "Inter, system-ui, sans-serif",
+        backdropFilter: "blur(18px)"
+      }}
+    >
+      <audio
+        ref={audioRef}
+        onEnded={handleEnded}
+      />
+
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "flex-start",
+          marginBottom: 22
+        }}
+      >
+        <div>
+          <div
+            style={{
+              fontSize: 11,
+              letterSpacing: "3px",
+              opacity: 0.55,
+              marginBottom: 7
+            }}
+          >
+            NYXTRYP
+          </div>
+
+          <div
+            style={{
+              fontSize: 21,
+              letterSpacing: "4px",
+              fontWeight: 500
+            }}
+          >
+            RADIO
+          </div>
+
+          <div
+            style={{
+              marginTop: 7,
+              fontSize: 9,
+              letterSpacing: "2px",
+              opacity: 0.42
+            }}
+          >
+            RELAXATION · AMBIENT · CONTINUOUS
+          </div>
+        </div>
+
+        <div
+          style={{
+            textAlign: "right",
+            fontSize: 9,
+            letterSpacing: "1.5px"
+          }}
+        >
+          <div
+            style={{
+              color: "#75d8ff",
+              marginBottom: 6
+            }}
+          >
+            ● SIGNAL LINK
+          </div>
+
+          <div
+            style={{
+              opacity: 0.5
+            }}
+          >
+            EARTH RELAY
+          </div>
+        </div>
+      </div>
+
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 8,
+          marginBottom: 18
+        }}
+      >
+        {Array.from({ length: 12 }).map(
+          (_, i) => (
+            <div
+              key={i}
+              style={{
+                flex: 1,
+                height: 3,
+                borderRadius: 4,
+                background:
+                  i <
+                  Math.round(
+                    (signal / 100) * 12
+                  )
+                    ? i > 9
+                      ? "#ff765c"
+                      : "#5fd7ff"
+                    : "rgba(255,255,255,.08)",
+                transition:
+                  "background .5s ease"
+              }}
+            />
+          )
+        )}
+      </div>
+
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          fontSize: 9,
+          letterSpacing: "1.5px",
+          opacity: 0.45,
+          marginBottom: 20
+        }}
+      >
+        <span>
+          SIGNAL {signal}%
+        </span>
+
+        <span>
+          DELAY {latency}
+        </span>
+      </div>
+
+      <div
+        style={{
+          height: 72,
+          marginBottom: 20,
+          borderTop:
+            "1px solid rgba(255,255,255,.06)",
+          borderBottom:
+            "1px solid rgba(255,255,255,.06)",
+          display: "flex",
+          alignItems: "center"
+        }}
+      >
+        <canvas
+          ref={canvasRef}
+          width={600}
+          height={120}
+          style={{
+            width: "100%",
+            height: "100%"
+          }}
+        />
+      </div>
+
+      <div
+        style={{
+          fontSize: 8,
+          letterSpacing: "2px",
+          opacity: 0.38,
+          marginBottom: 7
+        }}
+      >
+        NOW TRANSMITTING
+      </div>
+
+      <div
+        style={{
+          fontSize: 16,
+          letterSpacing: "1px",
+          marginBottom: 22,
+          whiteSpace: "nowrap",
+          overflow: "hidden",
+          textOverflow: "ellipsis"
+        }}
+      >
+        {track.title}
+      </div>
+
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 14
+        }}
+      >
+        <button
+          onClick={togglePlay}
+          style={{
+            width: 46,
+            height: 46,
+            borderRadius: "50%",
+            border:
+              "1px solid rgba(110,210,255,.45)",
+            background:
+              "rgba(90,180,255,.08)",
+            color: "#dff6ff",
+            cursor: "pointer",
+            fontSize: 16
+          }}
+        >
+          {playing ? "Ⅱ" : "▶"}
+        </button>
+
+        <button
+          onClick={() => setMuted(!muted)}
+          style={{
+            border: "none",
+            background: "transparent",
+            color: "#cde8f8",
+            cursor: "pointer",
+            fontSize: 12,
+            letterSpacing: "1px"
+          }}
+        >
+          {muted ? "UNMUTE" : "MUTE"}
+        </button>
+
+        <div
+          style={{
+            flex: 1,
+            display: "flex",
+            alignItems: "center",
+            gap: 9
+          }}
+        >
+          <span
+            style={{
+              fontSize: 9,
+              opacity: 0.4
+            }}
+          >
+            VOL
+          </span>
+
+          <input
+            type="range"
+            min="0"
+            max="1"
+            step="0.01"
+            value={volume}
+            onChange={(e) =>
+              setVolume(
+                Number(e.target.value)
+              )
+            }
+            style={{
+              width: "100%",
+              accentColor: "#67d8ff"
+            }}
+          />
+
+          <span
+            style={{
+              fontSize: 9,
+              opacity: 0.4,
+              width: 26
+            }}
+          >
+            {Math.round(volume * 100)}
+          </span>
+        </div>
+      </div>
+
+      <div
+        style={{
+          marginTop: 22,
+          paddingTop: 14,
+          borderTop:
+            "1px solid rgba(255,255,255,.06)",
+          display: "flex",
+          justifyContent: "space-between",
+          fontSize: 8,
+          letterSpacing: "1.5px",
+          opacity: 0.3
+        }}
+      >
+        <span>DEEP SPACE RELAY</span>
+        <span>CHANNEL 01</span>
+      </div>
+    </div>
+  )
+}
