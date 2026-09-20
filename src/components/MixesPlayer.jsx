@@ -50,9 +50,9 @@ export default function MixesPlayer({ onClose }) {
 
   const [signal, setSignal] = useState(92)
   const [latency, setLatency] = useState("1.4s")
-  const [, setMediaVersion] = useState(0)
+  const [mediaVersion, setMediaVersion] = useState(0)
 
-  const track = MIXES[trackIndex]
+  const track = MIXES[trackIndex] || { title: "NO MEDIA", file: "" }
 
   useEffect(() => {
     let cancelled = false
@@ -60,7 +60,7 @@ export default function MixesPlayer({ onClose }) {
     fetch("/api/media", { cache: "no-store" })
       .then(r => r.ok ? r.json() : Promise.reject(new Error("media api failed")))
       .then(data => {
-        if (cancelled || !Array.isArray(data.mixes) || !data.mixes.length) return
+        if (cancelled || !Array.isArray(data.mixes)) return
 
         const dynamic = data.mixes.map(name => ({
           title: name.replace(/\.mp3$/i, ""),
@@ -403,7 +403,7 @@ export default function MixesPlayer({ onClose }) {
         updateDuration
       )
     }
-  }, [trackIndex])
+  }, [trackIndex, mediaVersion])
 
   /*
    * Decorative signal information.
