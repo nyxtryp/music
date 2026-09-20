@@ -108,6 +108,10 @@ async function handle(req, res) {
     return send(res, 200, { ok: true, service: 'nyxtryp-music-storage' })
   }
 
+  if (req.method === 'GET' && pathname === '/api/media') {
+    return send(res, 200, await listMedia())
+  }
+
   if (req.method === 'GET' && pathname === '/api/admin') {
     if (!checkKey(req)) return send(res, 401, { ok: false, error: 'unauthorized' })
     return send(res, 200, await listMedia())
