@@ -78,12 +78,12 @@ export default function RadioPlayer({ onClose }) {
     randomIndex()
   )
 
-  const [, setMediaVersion] = useState(0)
+  const [mediaVersion, setMediaVersion] = useState(0)
 
   const [signal, setSignal] = useState(92)
   const [latency, setLatency] = useState("1.4s")
 
-  const track = RADIO_TRACKS[trackIndex]
+  const track = RADIO_TRACKS[trackIndex] || { title: "NO MEDIA", file: "" }
 
   useEffect(() => {
     let cancelled = false
@@ -98,8 +98,7 @@ export default function RadioPlayer({ onClose }) {
       .then(data => {
         if (
           cancelled ||
-          !Array.isArray(data.radio) ||
-          !data.radio.length
+          !Array.isArray(data.radio)
         ) {
           return
         }
@@ -456,7 +455,7 @@ export default function RadioPlayer({ onClose }) {
       }
 
     start()
-  }, [trackIndex])
+  }, [trackIndex, mediaVersion])
 
   /*
    * Automatically choose another random
