@@ -47,14 +47,14 @@ export default function TracksPlayer({ onClose }) {
   const velocityRef = useRef(new Float32Array(64))
   const peakRef = useRef(new Float32Array(64))
   const [trackIndex,setTrackIndex] = useState(0), [playing,setPlaying] = useState(false), [volume,setVolume] = useState(.68), [muted,setMuted] = useState(false), [currentTime,setCurrentTime] = useState(0), [duration,setDuration] = useState(0), [leftVU,setLeftVU] = useState(-60), [rightVU,setRightVU] = useState(-60), [,setMediaVersion] = useState(0)
-  const track = TRACKS[trackIndex]
+  const track = TRACKS[trackIndex] || { title: "NO MEDIA", file: "" }
 
   useEffect(() => {
     let cancelled = false
     fetch('/api/media', { cache: 'no-store' })
       .then(r => r.ok ? r.json() : Promise.reject(new Error('media api failed')))
       .then(data => {
-        if (cancelled || !Array.isArray(data.tracks) || !data.tracks.length) return
+        if (cancelled || !Array.isArray(data.tracks)tracks.length) return
         const dynamic = data.tracks.map(name => ({ title: name.replace(/\.mp3$/i, ''), file: data.trackUrls?.[name] || `/media/tracks/${encodeURIComponent(name)}` }))
         TRACKS.splice(0, TRACKS.length, ...dynamic)
         setMediaVersion(v => v + 1)
@@ -83,7 +83,7 @@ export default function TracksPlayer({ onClose }) {
     const startPlayback=async()=>{if(cancelled)return;try{const ctx=await setupAudio();if(ctx?.state==="suspended")await ctx.resume();await audio.play();if(!cancelled)setPlaying(true)}catch{if(!cancelled)setPlaying(false)}}
     if(wasPlaying){if(audio.readyState>=3)startPlayback();else audio.addEventListener("canplay",startPlayback,{once:true})}else{audio.pause();setPlaying(false)}
     return()=>{cancelled=true;audio.removeEventListener("canplay",startPlayback)}
-  },[trackIndex])
+  },[trackIndex,mediaVersion])
   useEffect(()=>{const audio=audioRef.current;if(!audio)return;audio.volume=volume;audio.muted=muted},[volume,muted])
   useEffect(()=>{const audio=audioRef.current;if(!audio)return;const time=()=>setCurrentTime(audio.currentTime||0),meta=()=>Number.isFinite(audio.duration)&&setDuration(audio.duration);audio.addEventListener("timeupdate",time);audio.addEventListener("loadedmetadata",meta);audio.addEventListener("durationchange",meta);return()=>{audio.removeEventListener("timeupdate",time);audio.removeEventListener("loadedmetadata",meta);audio.removeEventListener("durationchange",meta)}},[trackIndex])
 
