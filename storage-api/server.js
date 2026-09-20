@@ -88,7 +88,7 @@ async function listMedia() {
 }
 
 async function saveEnvKey(newKey) {
-  const text = `NYXTRYP_ADMIN_KEY=${JSON.stringify(newKey)}\\n`
+  const text = `NYXTRYP_ADMIN_KEY=${JSON.stringify(newKey)}\n`
   const tmp = `${ENV_FILE}.tmp-${randomUUID()}`
   await fsp.writeFile(tmp, text, { mode: 0o600 })
   await fsp.rename(tmp, ENV_FILE)
