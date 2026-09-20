@@ -46,7 +46,7 @@ export default function TracksPlayer({ onClose }) {
   const spectrumRef = useRef(new Float32Array(64))
   const velocityRef = useRef(new Float32Array(64))
   const peakRef = useRef(new Float32Array(64))
-  const [trackIndex,setTrackIndex] = useState(0), [playing,setPlaying] = useState(false), [volume,setVolume] = useState(.68), [muted,setMuted] = useState(false), [currentTime,setCurrentTime] = useState(0), [duration,setDuration] = useState(0), [leftVU,setLeftVU] = useState(-60), [rightVU,setRightVU] = useState(-60), [,setMediaVersion] = useState(0)
+  const [trackIndex,setTrackIndex] = useState(0), [playing,setPlaying] = useState(false), [volume,setVolume] = useState(.68), [muted,setMuted] = useState(false), [currentTime,setCurrentTime] = useState(0), [duration,setDuration] = useState(0), [leftVU,setLeftVU] = useState(-60), [rightVU,setRightVU] = useState(-60), [mediaVersion,setMediaVersion] = useState(0)
   const track = TRACKS[trackIndex] || { title: "NO MEDIA", file: "" }
 
   useEffect(() => {
@@ -54,7 +54,7 @@ export default function TracksPlayer({ onClose }) {
     fetch('/api/media', { cache: 'no-store' })
       .then(r => r.ok ? r.json() : Promise.reject(new Error('media api failed')))
       .then(data => {
-        if (cancelled || !Array.isArray(data.tracks)tracks.length) return
+        if (cancelled || !Array.isArray(data.tracks)) return
         const dynamic = data.tracks.map(name => ({ title: name.replace(/\.mp3$/i, ''), file: data.trackUrls?.[name] || `/media/tracks/${encodeURIComponent(name)}` }))
         TRACKS.splice(0, TRACKS.length, ...dynamic)
         setMediaVersion(v => v + 1)
