@@ -1,8 +1,11 @@
 {
-  "kind": "static",
+  "kind": "node",
   "build": {
     "command": "npm run build",
     "output": "dist",
     "install": "auto"
+  },
+  "start": {
+    "command": "npm start"
   }
 }
