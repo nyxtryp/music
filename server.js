@@ -46,7 +46,7 @@ function normalizeImportUrl(rawUrl) {
         : null
 
   if (driveId) {
-    return \`https://drive.usercontent.google.com/download?export=download&confirm=t&id=\${encodeURIComponent(driveId)}\`
+    return 'https://drive.usercontent.google.com/download?export=download&confirm=t&id=' + encodeURIComponent(driveId)
   }
 
   if (source.hostname === 'localhost' || source.hostname === '127.0.0.1' || source.hostname === '::1' || source.hostname.endsWith('.localhost')) {
