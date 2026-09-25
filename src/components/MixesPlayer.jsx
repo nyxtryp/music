@@ -471,7 +471,7 @@ export default function MixesPlayer({ onClose }) {
     }
 
     start()
-  }, [trackIndex])
+  }, [trackIndex, mediaVersion])
 
   /*
    * Automatically move to next mix.
