@@ -1,22 +1,6 @@
 import { useEffect, useRef, useState } from "react"
 
-const RADIO_TRACKS = [
-  { title: "Amazing Nature", file: "/media/radio/Amazing_Nature.mp3" },
-  { title: "Calm Vibrations", file: "/media/radio/Calm_Vibrations.mp3" },
-  { title: "Deep Sleep", file: "/media/radio/Deep_Sleep.mp3" },
-  { title: "Forest Before Rain", file: "/media/radio/Forest_Before_Rain.mp3" },
-  { title: "Forest Sounds", file: "/media/radio/Forest_Sounds.mp3" },
-  { title: "Harmony", file: "/media/radio/Harmony.mp3" },
-  { title: "Inner Peace", file: "/media/radio/Inner_Peace.mp3" },
-  { title: "Inside Japan", file: "/media/radio/Inside_Japan.mp3" },
-  { title: "Iren Lullaby", file: "/media/radio/Iren_Lullaby.mp3" },
-  { title: "Morning Prayer", file: "/media/radio/Morning_Prayer.mp3" },
-  { title: "Ocean Waves", file: "/media/radio/Ocean_Waves.mp3" },
-  { title: "Path to Happiness", file: "/media/radio/Path_to_Happiness.mp3" },
-  { title: "Quiet Place", file: "/media/radio/Quiet_Place.mp3" },
-  { title: "Sparks", file: "/media/radio/Sparks.mp3" },
-  { title: "Thunderstorm", file: "/media/radio/Thunderstorm.mp3" }
-]
+const RADIO_TRACKS = []
 
 function randomIndex(except = -1) {
   if (RADIO_TRACKS.length <= 1) return 0

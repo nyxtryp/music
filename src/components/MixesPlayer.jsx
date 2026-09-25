@@ -1,23 +1,6 @@
 import { useEffect, useRef, useState } from "react"
 
-const MIXES = [
-  {
-    title: "Divine Artist - Best of Ethnic",
-    file: "/media/mixes/Divine Artist - Best of Ethnic.mp3"
-  },
-  {
-    title: "Midnight in Cairo Arabic Jazz & Oud Melodies for Late Night Reflection",
-    file: "/media/mixes/Midnight in Cairo Arabic Jazz & Oud Melodies for Late Night Reflection.mp3"
-  },
-  {
-    title: "Moon Over Arabia Desert Media",
-    file: "/media/mixes/Moon Over Arabia Desert Media.mp3"
-  },
-  {
-    title: "TRANCE FESTIVAL 2026 🔥 🎶 Best of .mp3",
-    file: "/media/mixes/TRANCE FESTIVAL 2026 🔥 🎶 Best of .mp3"
-  }
-]
+const MIXES = []
 
 function formatTime(value) {
   if (!Number.isFinite(value) || value < 0) {

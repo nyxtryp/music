@@ -1,8 +1,6 @@
 import { useEffect, useRef, useState } from "react"
 
-const TRACKS = [
-  "After Midnight","Awaken The Machine","Beyond Reality","Beyond The Signal","Crystal Memory","Digital Paradise","Echoes Of Tomorrow","Electric Dreams","Electric Soul","Final Horizon","Future Is Calling","Gravity Of Light","Hidden Dimension","Higher State","Infinite Desire","Infinite Motion","Into The Unknown","Lost In Frequency","Neon Awakening","Night Protocol","Parallel Hearts","Silent Velocity","Synthetic Emotion","The Last Transmission","Zero Gravity"
-].map(title => ({ title: `${title} — Nyxtryp`, file: `/media/tracks/${title} — Nyxtryp.mp3` }))
+const TRACKS = []
 
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v))
 const formatTime = value => {
