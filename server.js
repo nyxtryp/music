@@ -68,7 +68,7 @@ function filenameFromResponse(response, sourceUrl, type) {
   const raw = decodeURIComponent(source.pathname.split('/').filter(Boolean).pop() || '')
   if (raw && !['download', 'uc', 'view'].includes(raw.toLowerCase())) return raw
 
-  return \`download-\${Date.now()}.\${type === 'photos' ? 'jpg' : 'bin'}\`
+  return `download-${Date.now()}.${type === 'photos' ? 'jpg' : 'bin'}`
 }
 
 function cleanFilename(name) {
@@ -90,7 +90,7 @@ async function importUrl(req, res) {
     if (!['tracks', 'radio', 'mixes', 'photos'].includes(type)) throw new Error('Недопустимая категория')
     if (!adminKey) throw new Error('Admin key не указан')
 
-    const auth = await fetch(\`\${STORAGE_API}/api/admin\`, {
+    const auth = await fetch(`${STORAGE_API}/api/admin`, {
       headers: { 'X-Admin-Key': adminKey }
     })
     if (!auth.ok) throw new Error('Неверный admin key')
@@ -101,7 +101,7 @@ async function importUrl(req, res) {
       signal: AbortSignal.timeout(30 * 60 * 1000)
     })
 
-    if (!remote.ok) throw new Error(\`Источник вернул HTTP \${remote.status}\`)
+    if (!remote.ok) throw new Error(`Источник вернул HTTP ${remote.status}`)
     const contentType = (remote.headers.get('content-type') || '').toLowerCase()
 
     if (contentType.includes('text/html')) {
@@ -111,7 +111,7 @@ async function importUrl(req, res) {
     const name = cleanFilename(filenameFromResponse(remote, source, type))
     if (!name || name === '.' || name === '..') throw new Error('Не удалось определить имя файла')
 
-    const uploadUrl = \`\${STORAGE_API}/api/upload?type=\${encodeURIComponent(type)}&name=\${encodeURIComponent(name)}\`
+    const uploadUrl = `${STORAGE_API}/api/upload?type=${encodeURIComponent(type)}&name=${encodeURIComponent(name)}`
     const headers = new Headers({
       'X-Admin-Key': adminKey,
       'Content-Type': remote.headers.get('content-type') || 'application/octet-stream'
